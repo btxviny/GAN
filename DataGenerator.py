@@ -14,7 +14,6 @@ class DataGenerator:
         self.stride = stride
         self.shape = shape
         self.video_names = os.listdir(self.stable_path)
-        self.video_names = random.sample(self.video_names, len(self.video_names))
         self.frame_idx = 30
 
     def get_paths(self,video):
@@ -24,6 +23,7 @@ class DataGenerator:
         return( paths)
     
     def __call__(self):
+        self.video_names = random.sample(self.video_names, len(self.video_names))
         for video in self.video_names:
             paths = self.get_paths(video)
             stable_frames, unstable_frames = load_video(paths,self.shape)
