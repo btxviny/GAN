@@ -72,5 +72,36 @@ def preprocess(img,shape):
     img = (img- 127.0) / 127.0
     return img
 
+class ShuffledGenerator:
+    def __init__(self,path,shape,stride,length,max_samples):
+        self.stable_path = os.path.join(path,'stable')
+        self.unstable_path = os.path.join(path,'unstable')
+        self.video_names = os.listdir(self.stable_path)
+        self.shape = shape
+        self.stride = stride
+        self.length = length
+        self.max_samples = max_samples
+    def imread(self,path,grayscale = False):
+        h,w,_ = self.shape
+        img = cv2.imread(path)
+        if grayscale:
+            img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        img = cv2.resize(img,(w,h),cv2.INTER_LINEAR)
+        img = (img- 127.0) / 127.0
+        return img.astype(np.float32)
+
+    def __call__(self):
+        for i in range(self.max_samples):
+            video = random.choice(self.video_names)
+            stable_video_path = os.path.join(self.stable_path,video)
+            unstable_video_path = os.path.join(self.unstable_path,video)
+            total_frames = len(os.listdir(os.path.join(self.stable_path,video)))
+            frame_idx = random.randint(30,total_frames - 1)
+            sequence = np.zeros(self.shape[:-1] + (self.length,),dtype = np.float32)
+            for i,j in zip(range(self.length),range(frame_idx - self.stride, frame_idx - self.length*self.stride, -self.stride)):
+                sequence[...,i] = self.imread(os.path.join(stable_video_path,f'{j}.png'),grayscale=True)
+            It = self.imread(os.path.join(unstable_video_path,f'{frame_idx}.png'))
+            Igt = self.imread(os.path.join(stable_video_path,f'{frame_idx}.png'))
+            yield sequence, It, Igt
 
 
